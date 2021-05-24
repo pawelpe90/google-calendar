@@ -1,0 +1,1 @@
+This script allows to manage your Google calendars directly from Python console.
