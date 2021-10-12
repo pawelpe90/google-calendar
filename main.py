@@ -1,70 +1,23 @@
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-import pickle
-from datetime import datetime, timedelta
-
-
-def get_credentials():
-    # run it only once
-    scopes = ['https://www.googleapis.com/auth/calendar']
-    flow = InstalledAppFlow.from_client_secrets_file("client_secret.json", scopes=scopes)
-    credentials = flow.run_console()
-    pickle.dump(credentials, open("token.pkl", "wb"))
-
-
-def new_calendar_event(summary, location, description, start_time, end_time):
-    timezone = 'Poland'
-
-    event = {
-        'summary': summary,
-        'location': location,
-        'description': description,
-        'start': {
-            'dateTime': start_time.strftime('%Y-%m-%dT%H:%M:%S'),
-            'timeZone': timezone,
-        },
-        'end': {
-            'dateTime': end_time.strftime('%Y-%m-%dT%H:%M:%S'),
-            'timeZone': timezone,
-        },
-        # 'attendees': [
-        #     {'email': 'lpage@example.com'},
-        #     {'email': 'sbrin@example.com'},
-        # ],
-        'reminders': {
-            'useDefault': False,
-            'overrides': [
-                {'method': 'email', 'minutes': 24 * 60},
-                {'method': 'popup', 'minutes': 10},
-            ],
-        },
-    }
-
-    return event
+from calendar_handler import Calendar
+from util.scrapper import league_scrapper
+from datetime import datetime
 
 
 def main():
-    # get_credentials()
 
-    credentials = pickle.load(open('token.pkl', 'rb'))
-    service = build('calendar', 'v3', credentials=credentials)
+    games = league_scrapper()
+    c1 = Calendar()
 
-    # display all calendars connected to the account
-    result_calendar = service.calendarList().list().execute()
-    my_calendar = result_calendar['items'][0]['id']
+    for game in games:
+        info = game['info']
+        date, sector = info.split(",")[0], info.split(",")[1][-1]
+        day, time = date.split(" ")[0], date.split(" ")[-1]
+        year, month, dom = int(day.split("-")[0]), int(day.split("-")[1]), int(day.split("-")[2])
+        hour, mins = int(time.split(":")[0]), int(time.split(":")[1])
 
-    # display all events in a calendar
-    # result_events = service.events().list(calendarId=my_calendar).execute()
+        start_time = datetime(year, month, dom, hour, mins, 0)
 
-    # insert new event
-    start_time = datetime(2021, 5, 30, 6, 0, 0)
-    end_time = start_time + timedelta(days=4)
-
-    event = new_calendar_event('Summary here', 'Location here', 'Description here', start_time, end_time)
-    service.events().insert(calendarId=my_calendar, body=event).execute()
-
-    # for r in result_events['items']:
-    #     print(r['summary'])
+        c1.add_event(game['game'], "SP nr 205", f"Sektor: {sector}\nWynik: {game['sets']}\n{game['points']}", start_time)
 
 
 main()
