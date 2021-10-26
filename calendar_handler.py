@@ -5,7 +5,7 @@ import os
 import pickle
 
 
-class Calendar:
+class CalendarHandler:
     def __init__(self, my_calendar_id):
         if not os.path.exists('token.pkl'):
             get_credentials()
@@ -15,12 +15,7 @@ class Calendar:
 
     @staticmethod
     def printer(iterate):
-        max_length = 0
-
-        for i in iterate['items']:
-            length = len(i['summary'])
-            if length > max_length:
-                max_length = length
+        max_length = max([len(i['summary']) for i in iterate['items']])
 
         for i in iterate['items']:
             length = len(i['summary'])
@@ -30,9 +25,10 @@ class Calendar:
             print(f"Summary: {i['summary']} {space}| id: {i['id']} | start_time: {i['start']['dateTime']}")
 
     def display_all_calendars(self):
-        result_calendar = self.service.calendarList().list().execute()
-        self.printer(result_calendar)
-        return result_calendar
+        result_calendars = self.service.calendarList().list().execute()
+        for calendar in result_calendars['items']:
+            print(calendar)
+        return result_calendars
 
     def add_event(self, summary, location, description, start_time):
         end_time = start_time + timedelta(minutes=90)
@@ -41,8 +37,11 @@ class Calendar:
 
     def list_events(self):
         events = self.service.events().list(calendarId=self.my_calendar_id).execute()
-        self.printer(events)
         return events
+
+    def print_events(self):
+        events = self.service.events().list(calendarId=self.my_calendar_id).execute()
+        self.printer(events)
 
     def update_event_summary(self, event_id, update):
         event = self.service.events().get(calendarId=self.my_calendar_id, eventId=event_id).execute()
@@ -61,5 +60,7 @@ class Calendar:
 
     def update_event_start_time(self, event_id, update):
         event = self.service.events().get(calendarId=self.my_calendar_id, eventId=event_id).execute()
+        end_time = update + timedelta(minutes=90)
         event['start']['dateTime'] = update.strftime('%Y-%m-%dT%H:%M:%S')
+        event['end']['dateTime'] = end_time.strftime('%Y-%m-%dT%H:%M:%S')
         self.service.events().update(calendarId=self.my_calendar_id, eventId=event['id'], body=event).execute()

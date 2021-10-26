@@ -3,8 +3,8 @@ from bs4 import BeautifulSoup
 from lxml import html
 
 
-def league_scrapper():
-    r = requests.get("http://www.siatka-lodzkie.org/_em.html")
+def league_scrapper(team_name):
+    r = requests.get("http://www.siatka-lodzkie.org/_ek.html")
     c = r.content
     soup = BeautifulSoup(c, "html.parser")
 
@@ -40,8 +40,9 @@ def league_scrapper():
         pnts = [y for x, y in enumerate(score) if x % 2 == 1]
 
         for (g, i, s, p) in zip(game, info, sets, pnts):
-            if 'Dream Team' in g.text:
-                # print(f"{g.text}\n{i.text}\n{s.text}\n{p.text}" + "\n" * 2)
+            if team_name in g.text and len(team_name) > 0:
+                games.append({"game": g.text, "info": i.text, "sets": s.text, "points": p.text})
+            elif len(team_name) == 0:
                 games.append({"game": g.text, "info": i.text, "sets": s.text, "points": p.text})
 
     return games
