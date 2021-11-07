@@ -3,6 +3,7 @@ from util.methods import new_calendar_event, get_credentials
 from datetime import timedelta
 import os
 import pickle
+import logging
 
 
 class CalendarHandler:
@@ -12,6 +13,8 @@ class CalendarHandler:
         self.credentials = pickle.load(open('token.pkl', 'rb'))
         self.service = build('calendar', 'v3', credentials=self.credentials)
         self.my_calendar_id = my_calendar_id
+        self.logger = logging.getLogger('run.calendar_handler')
+        self.logger.info("Calendar initiated.")
 
     @staticmethod
     def printer(iterate):
@@ -31,6 +34,8 @@ class CalendarHandler:
         return result_calendars
 
     def add_event(self, summary, location, description, start_time):
+        self.logger.info(f"Adding event: {summary}")
+
         end_time = start_time + timedelta(minutes=90)
         event = new_calendar_event(summary, location, description, start_time, end_time)
         self.service.events().insert(calendarId=self.my_calendar_id, body=event).execute()

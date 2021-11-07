@@ -4,7 +4,7 @@ from lxml import html
 
 
 def league_scrapper(team_name):
-    r = requests.get("http://www.siatka-lodzkie.org/_ek.html")
+    r = requests.get("http://www.siatka-lodzkie.org/_em.html")
     c = r.content
     soup = BeautifulSoup(c, "html.parser")
 
